@@ -15,7 +15,32 @@ public:
   }
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) override {
-    outs() << "\nLOOPPASS INIZIATO...\n"; 
+    outs() << "LOOPPASS INIZIATO...\n";
+
+    if(L->isLoopSimplifyForm())         // alias per forma normale dei loop
+      outs() << "\nil loop è canonico\n";
+
+    BasicBlock* preheader = L->getLoopPreheader();
+    if(preheader)
+    {
+      outs() << "\nil loop ha un preheader.\nISTRUZIONI PREHEADER\n";
+      for(Instruction &i : *preheader)
+        outs() << i << "\n";
+    }
+
+    uint counter = 1;
+    outs() << "\nBASIC BLOCK DEL LOOP";
+    for(auto& bb : L->getBlocks())
+    {
+      outs() << "\nBB n°" << counter << "\n";
+
+      for(auto& i : *bb)
+        outs() << i << "\n";
+
+      counter++;
+    }
+    outs() << "\n";
+
     return false; 
   }
 };
