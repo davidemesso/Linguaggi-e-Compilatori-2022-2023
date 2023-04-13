@@ -29,18 +29,49 @@ public:
     }
 
     uint counter = 1;
-    outs() << "\nBASIC BLOCK DEL LOOP";
+    outs() << "\nBASIC BLOCK DEL LOOP\n";
     for(auto& bb : L->getBlocks())
     {
-      outs() << "\nBB n°" << counter << "\n";
+      outs() << "\nBB: ";
+      bb->printAsOperand(outs(), false);
+      outs() << "\n";
 
       for(auto& i : *bb)
         outs() << i << "\n";
 
       counter++;
     }
-    outs() << "\n";
+    outs() << "\n\n";
 
+    //Esercizio 2
+    for(auto& bb : L->getBlocks())
+    {
+      for(auto& i : *bb)
+      {
+        if(i.getOpcode() == Instruction::Sub)
+        {
+          outs() << "Sono una sub.\n";
+
+          Instruction* opR = dyn_cast<Instruction>(i.getOperand(0));
+          Instruction* opL = dyn_cast<Instruction>(i.getOperand(1));
+
+          if(opR)
+          {
+            outs() << "BB di Op Right: ";
+            opR->getParent()->printAsOperand(outs(), false);
+            outs() << "\n";
+          }
+          if(opL)
+          {
+            outs() << "BB di Op Left: ";
+            opL->getParent()->printAsOperand(outs(), false);
+            outs() << "\n";
+          }
+        }
+      }
+
+      counter++;
+    }
     return false; 
   }
 };
