@@ -12,6 +12,7 @@ public:
   LoopWalkPass() : LoopPass(ID) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+    DominatorTree* DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   }
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) override {
