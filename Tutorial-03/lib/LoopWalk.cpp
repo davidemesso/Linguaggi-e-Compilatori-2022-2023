@@ -12,10 +12,15 @@ public:
   LoopWalkPass() : LoopPass(ID) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
-    DominatorTree* DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<LoopInfoWrapperPass>();
   }
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) override {
+    // esempio di strutture dati utili per un passo
+    DominatorTree* DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    LoopInfo* LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+
     outs() << "LOOPPASS INIZIATO...\n";
 
     if(L->isLoopSimplifyForm())         // alias per forma normale dei loop
