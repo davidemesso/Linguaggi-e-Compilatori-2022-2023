@@ -22,63 +22,110 @@ public:
     LoopInfo* LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
     outs() << "LOOPPASS INIZIATO...\n";
-
-    if(L->isLoopSimplifyForm())         // alias per forma normale dei loop
-      outs() << "\nil loop è canonico\n";
-
-    BasicBlock* preheader = L->getLoopPreheader();
-    if(preheader)
+  
+    // find loop-invariant instructions
+    for(auto& bb: L->getBlocks())
     {
-      outs() << "\nil loop ha un preheader.\nISTRUZIONI PREHEADER\n";
-      for(Instruction &i : *preheader)
-        outs() << i << "\n";
-    }
-
-    uint counter = 1;
-    outs() << "\nBASIC BLOCK DEL LOOP\n";
-    for(auto& bb : L->getBlocks())
-    {
-      outs() << "\nBB: ";
-      bb->printAsOperand(outs(), false);
-      outs() << "\n";
-
-      for(auto& i : *bb)
-        outs() << i << "\n";
-
-      counter++;
-    }
-    outs() << "\n\n";
-
-    //Esercizio 2
-    for(auto& bb : L->getBlocks())
-    {
-      for(auto& i : *bb)
+      for(auto& i: *bb)
       {
-        if(i.getOpcode() == Instruction::Sub)
+        if(checkInvariance(L, &i))
         {
-          outs() << "Sono una sub.\n";
-
-          Instruction* opR = dyn_cast<Instruction>(i.getOperand(0));
-          Instruction* opL = dyn_cast<Instruction>(i.getOperand(1));
-
-          if(opR)
-          {
-            outs() << "BB di Op Right: ";
-            opR->getParent()->printAsOperand(outs(), false);
-            outs() << "\n";
-          }
-          if(opL)
-          {
-            outs() << "BB di Op Left: ";
-            opL->getParent()->printAsOperand(outs(), false);
-            outs() << "\n";
-          }
+          outs() << i << " è loop-invariant\n";
+          loopInvariantInsts.push_front(&i);
         }
       }
+    }
 
-      counter++;
+    SmallVector<BasicBlock*> exitBlocks;
+    L->getExitBlocks(exitBlocks);
+
+    outs() << "\n";
+
+    std::list<Instruction*> toBeRemoved;
+
+    for(auto& i : loopInvariantInsts)
+    {
+      BasicBlock* instBB = i->getParent();
+      bool res = true;
+      for(auto &exitBB : exitBlocks)
+      {
+        if(res)
+          res = DT->dominates(instBB, exitBB);
+        else
+          break;
+      }
+
+      if(res)
+      {
+        instBB->printAsOperand(outs(), false);
+        outs() << " domina tutte le uscite del loop\n";
+      }
+      else
+        toBeRemoved.push_front(i);
+    }
+    
+    for(auto& i: toBeRemoved)
+      loopInvariantInsts.remove(i);
+    
+    outs() << "\n";
+
+    for(auto& i : loopInvariantInsts)
+    {
+      i->printAsOperand(outs(), false);
+      outs() << "\n";
+  
+      BasicBlock* instBB = i->getParent();
+      bool res = true;
+      for(auto &use : i->uses())
+      {
+        Instruction* tmp = dyn_cast<Instruction>(use);
+
+        if(res)
+        {
+          if(tmp)
+            res = DT->dominates(instBB, tmp->getParent());
+        }
+        else
+          break;
+      }
+
+      if(res)
+      {
+        i->printAsOperand(outs(), false);
+        outs() << " domina tutti gli usi\n";
+      }
+      else
+        toBeRemoved.push_front(i);
     }
     return false; 
+  }
+
+  bool checkInvariance(Loop* L, Instruction* I) {
+    if(dyn_cast<BinaryOperator>(I))
+    {
+      Value* op_right = I->getOperand(1);
+      Value* op_left = I->getOperand(0);
+      return _isLoopInvariant(L, op_right) && _isLoopInvariant(L, op_left);
+    }
+    return false;
+  }
+
+private:
+  std::list<Instruction*> loopInvariantInsts;
+
+  bool _isLoopInvariant(Loop* L, Value* V) {
+    if(dyn_cast<Constant>(V) != nullptr)
+      return true;
+
+    Instruction* inst = dyn_cast<Instruction>(V);
+    if(inst)
+      if(!(L->contains(inst)))
+        return false;
+      else
+        return checkInvariance(L, inst);
+
+
+    return true;
   }
 };
 
