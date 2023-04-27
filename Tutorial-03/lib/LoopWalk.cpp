@@ -1,5 +1,6 @@
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Analysis/ValueTracking.h>
+#include <llvm/IR/IRBuilder.h>
 
 using namespace llvm;
 
@@ -41,7 +42,7 @@ public:
 
     outs() << "\n";
 
-    std::list<Instruction*> toBeRemoved;
+    std::set<Instruction*> toBeRemoved;
 
     for(auto& i : loopInvariantInsts)
     {
@@ -61,7 +62,7 @@ public:
         outs() << " domina tutte le uscite del loop\n";
       }
       else
-        toBeRemoved.push_front(i);
+        toBeRemoved.insert(i);
     }
     
     for(auto& i: toBeRemoved)
@@ -71,9 +72,6 @@ public:
 
     for(auto& i : loopInvariantInsts)
     {
-      i->printAsOperand(outs(), false);
-      outs() << "\n";
-  
       BasicBlock* instBB = i->getParent();
       bool res = true;
       for(auto &use : i->uses())
@@ -95,9 +93,34 @@ public:
         outs() << " domina tutti gli usi\n";
       }
       else
-        toBeRemoved.push_front(i);
+        toBeRemoved.insert(i);
     }
-    return false; 
+
+    BasicBlock* header = L->getHeader();
+    BasicBlock* preheader = L->getLoopPreheader();
+
+    if(!preheader)
+    {
+
+      preheader = BasicBlock::Create(header->getContext(), "Preheader", header->getParent());
+      preheader->moveBefore(header);
+    }
+    else
+      outs() << "\nIl preheader già esiste\n";
+
+    Instruction* insertionPoint = nullptr;
+
+    for(auto& point : *preheader)
+    {
+        insertionPoint = &point;
+        break;
+    }
+    for(auto& i : loopInvariantInsts)
+    {
+      i->moveBefore(insertionPoint);
+    }
+    outs() << "Le istruzioni loop-invariant spostabili ono saltate nel preheader\n";
+    return false;
   }
 
   bool checkInvariance(Loop* L, Instruction* I) {
