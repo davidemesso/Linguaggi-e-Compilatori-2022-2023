@@ -32,7 +32,7 @@ public:
         if(checkInvariance(L, &i))
         {
           outs() << i << " è loop-invariant\n";
-          loopInvariantInsts.push_front(&i);
+          loopInvariantInsts.push_back(&i);
         }
       }
     }
@@ -55,7 +55,23 @@ public:
         else
           break;
       }
-
+      // rilassamento della condizione
+      if(!res)
+      {
+        res = true;
+        for(auto& i : loopInvariantInsts)
+        {
+          for(auto& use: i->uses())
+          {
+            Instruction* tmp = dyn_cast<Instruction>(use);
+            if(tmp && !L->contains(tmp->getParent()))
+            {
+                res = false;
+                break;
+            }
+          }
+        }
+      }
       if(res)
       {
         instBB->printAsOperand(outs(), false);
@@ -119,7 +135,7 @@ public:
     {
       i->moveBefore(insertionPoint);
     }
-    outs() << "Le istruzioni loop-invariant spostabili ono saltate nel preheader\n";
+    outs() << "Le istruzioni loop-invariant spostabili sono saltate nel preheader\n";
     return false;
   }
 
