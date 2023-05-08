@@ -1,91 +1,45 @@
-#include "LoopFusionOpts.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include <llvm/Analysis/LoopPass.h>
+#include <llvm/Analysis/ValueTracking.h>
+#include <llvm/IR/IRBuilder.h>
 
 using namespace llvm;
 
-bool runOnBasicBlock(BasicBlock &B) {
-    
-    // Preleviamo le prime due istruzioni del BB
-    Instruction &Inst1st = *B.begin(), &Inst2nd = *(++B.begin());
+namespace {
 
-    // L'indirizzo della prima istruzione deve essere uguale a quello del 
-    // primo operando della seconda istruzione (per costruzione dell'esempio)
-    assert(&Inst1st == Inst2nd.getOperand(0));
+class LoopFusionPass final : public FunctionPass {
+public:
+  static char ID;
 
-    // Stampa la prima istruzione
-    outs() << "PRIMA ISTRUZIONE: " << Inst1st << "\n";
-    // Stampa la prima istruzione come operando
-    outs() << "COME OPERANDO: ";
-    Inst1st.printAsOperand(outs(), false);
-    outs() << "\n";
+  LoopFusionPass() : FunctionPass(ID) {}
 
-    // User-->Use-->Value
-    outs() << "I MIEI OPERANDI SONO:\n";
-    for (auto *Iter = Inst1st.op_begin(); Iter != Inst1st.op_end(); ++Iter) {
-      Value *Operand = *Iter;
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<LoopInfoWrapperPass>();
+  }
 
-      if (Argument *Arg = dyn_cast<Argument>(Operand)) {
-        outs() << "\t" << *Arg << ": SONO L'ARGOMENTO N. " << Arg->getArgNo() 
-	       <<" DELLA FUNZIONE" << Arg->getParent()->getName()
-               << "\n";
-      }
-      if (ConstantInt *C = dyn_cast<ConstantInt>(Operand)) {
-        outs() << "\t" << *C << ": SONO UNA COSTANTE INTERA DI VALORE " << C->getValue()
-               << "\n";
+  virtual bool runOnFunction(Function &F) override {
+    // esempio di strutture dati utili per un passo
+    DominatorTree* DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    LoopInfo* LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+
+    outs() << "LOOPFUSION INIZIATO...\n";
+
+    SmallVector<Loop*> loops;
+
+    for(auto &l: LI->getLoopsInPreorder())
+    {
+      if(l->isLoopSimplifyForm()) {
+        l->print(outs(), false);
+        outs() << "is in simplified form\n";
       }
     }
-
-    outs() << "LA LISTA DEI MIEI USERS:\n";
-    for (auto Iter = Inst1st.user_begin(); Iter != Inst1st.user_end(); ++Iter) {
-      outs() << "\t" << *(dyn_cast<Instruction>(*Iter)) << "\n";
-    }
-
-    outs() << "E DEI MIEI USI (CHE E' LA STESSA):\n";
-    for (auto Iter = Inst1st.use_begin(); Iter != Inst1st.use_end(); ++Iter) {
-      outs() << "\t" << *(dyn_cast<Instruction>(Iter->getUser())) << "\n";
-    }
-
-    // Manipolazione delle istruzioni
-    Instruction *NewInst = BinaryOperator::Create(
-        Instruction::Add, Inst1st.getOperand(0), Inst1st.getOperand(0));
-
-    NewInst->insertAfter(&Inst1st);
-    // Si possono aggiornare le singole references separatamente?
-    // Controlla la documentazione e prova a rispondere.
-    Inst1st.replaceAllUsesWith(NewInst);
-
     return true;
   }
+};
 
+char LoopFusionPass::ID = 0;
+RegisterPass<LoopFusionPass> X("fusion",
+                             "Loop Fusion");
 
-  bool runOnFunction(Function &F) {
-    bool Transformed = false;
-
-    for (auto Iter = F.begin(); Iter != F.end(); ++Iter) {
-      if (runOnBasicBlock(*Iter)) {
-        Transformed = true;
-      }
-    }
-
-    return Transformed;
-  }
-
-
-
-
-PreservedAnalyses TransformPass::run([[maybe_unused]] Function &F,
-                                             FunctionAnalysisManager &AM) {
-
-    auto &LI = AM.getResult<LoopInfo>(F);
-
-    // Un semplice passo di esempio di manipolazione della IR
-    for (auto Iter = M.begin(); Iter != M.end(); ++Iter) {
-        if (runOnFunction(*Iter)) {
-        return PreservedAnalyses::none();
-        }
-    }
-
-  return PreservedAnalyses::none();
-}
+} // anonymous namespace
 
