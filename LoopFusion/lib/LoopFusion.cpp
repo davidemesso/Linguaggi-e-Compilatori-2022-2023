@@ -26,11 +26,33 @@ public:
 
     SmallVector<Loop*> loops;
 
-    for(auto &l: LI->getLoopsInPreorder())
+    for(auto &loop: LI->getLoopsInPreorder())
     {
-      if(l->isLoopSimplifyForm()) {
-        l->print(outs(), false);
+       if(loop->isLoopSimplifyForm()) {
+        loop->print(outs(), false);
         outs() << "is in simplified form\n";
+        loops.push_back(loop);
+      }
+    }
+    outs() << "\n";
+
+    for(auto &i: loops) {
+      for(auto &l: loops) {
+        if(i != l)
+        {
+          auto preheader = l->getLoopPreheader();
+          SmallVector<BasicBlock*> exitBlocks;
+          i->getExitBlocks(exitBlocks);
+
+          for(auto& bb: exitBlocks) {
+            if(bb == preheader)
+            {
+              l->print(outs(), false);
+              outs() << " is adjacent to";
+              i->print(outs(), false);
+            }
+          }
+        }
       }
     }
     return true;
