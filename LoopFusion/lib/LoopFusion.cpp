@@ -24,20 +24,21 @@ public:
 
     outs() << "LOOPFUSION INIZIATO...\n";
 
-    SmallVector<Loop*> loops;
+    SmallVector<Loop*> AllLoops = LI->getLoopsInPreorder();
+    SmallVector<Loop*> checkedLoops;
 
-    for(auto &loop: LI->getLoopsInPreorder())
+    for(auto &loop: AllLoops)
     {
        if(loop->isLoopSimplifyForm() && loop->getExitBlock() && checkPreheader(loop)) {
         loop->print(outs(), false);
         outs() << "is in simplified form and is ok for adjacency control\n";
-        loops.push_back(loop);
+        checkedLoops.push_back(loop);
       }
     }
     outs() << "\n";
 
-    for(auto &i: loops) {
-      for(auto &l: loops) {
+    for(auto &i: AllLoops) {
+      for(auto &l: checkedLoops) {
         if(i == l)
           continue;
         
@@ -59,10 +60,19 @@ private:
   bool checkPreheader(Loop* l) {
     auto preheader = l->getLoopPreheader();
     
-    if(preheader->getInstList().size() > 1)
+    if(preheader->getInstList().size() != 1)
       return false;
+    
+    for(auto &inst: preheader->getInstList()) {
 
-    return preheader->getUniqueSuccessor() == l->getHeader();
+      if(inst.getOpcode() != Instruction::Br)
+        return false;
+      
+      auto op = inst.getOperand(0);
+      
+      return op == l->getHeader();
+    }
+    return true;
   }
 
 };
