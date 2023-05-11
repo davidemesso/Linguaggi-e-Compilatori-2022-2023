@@ -38,20 +38,20 @@ public:
 
     for(auto &i: loops) {
       for(auto &l: loops) {
-        if(i != l)
-        {
-          auto preheader = l->getLoopPreheader();
-          SmallVector<BasicBlock*> exitBlocks;
-          i->getExitBlocks(exitBlocks);
+        if(i == l)
+          continue;
+        
+        auto preheader = l->getLoopPreheader();
+        auto exitBlock = i->getExitBlock();
 
-          for(auto& bb: exitBlocks) {
-            if(bb == preheader)
-            {
-              l->print(outs(), false);
-              outs() << " is adjacent to";
-              i->print(outs(), false);
-            }
-          }
+        if(!exitBlock)
+          continue;
+
+        if(exitBlock == preheader)
+        {
+          l->print(outs(), false);
+          outs() << " is adjacent to: ";
+          i->print(outs(), false);
         }
       }
     }
