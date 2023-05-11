@@ -4,6 +4,7 @@
 
 void populate(int a[N], int b[N], int c[N]) {
     int i;
+    printf("%d", 10);
     for(i=0; i<N; i++) {
         a[i] = 5*c[i];
         
