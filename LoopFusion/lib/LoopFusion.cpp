@@ -30,7 +30,7 @@ public:
     {
        if(loop->isLoopSimplifyForm() && loop->getExitBlock() && checkPreheader(loop)) {
         loop->print(outs(), false);
-        outs() << "is in simplified form\n";
+        outs() << "is in simplified form and is ok for adjacency control\n";
         loops.push_back(loop);
       }
     }
