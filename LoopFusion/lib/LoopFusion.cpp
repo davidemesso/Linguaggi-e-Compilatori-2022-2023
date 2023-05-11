@@ -28,7 +28,7 @@ public:
 
     for(auto &loop: LI->getLoopsInPreorder())
     {
-       if(loop->isLoopSimplifyForm()) {
+       if(loop->isLoopSimplifyForm() && loop->getExitBlock() && checkPreheader(loop)) {
         loop->print(outs(), false);
         outs() << "is in simplified form\n";
         loops.push_back(loop);
@@ -44,9 +44,6 @@ public:
         auto preheader = l->getLoopPreheader();
         auto exitBlock = i->getExitBlock();
 
-        if(!exitBlock)
-          continue;
-
         if(exitBlock == preheader)
         {
           l->print(outs(), false);
@@ -57,6 +54,17 @@ public:
     }
     return true;
   }
+
+private:
+  bool checkPreheader(Loop* l) {
+    auto preheader = l->getLoopPreheader();
+    
+    if(preheader->getInstList().size() > 1)
+      return false;
+
+    return preheader->getUniqueSuccessor() == l->getHeader();
+  }
+
 };
 
 char LoopFusionPass::ID = 0;
