@@ -1,5 +1,8 @@
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Analysis/ValueTracking.h>
+#include <llvm/Analysis/PostDominators.h>
+#include <llvm/Analysis/ScalarEvolution.h>
+#include <llvm/Analysis/LoopInfo.h>
 #include <llvm/IR/IRBuilder.h>
 
 using namespace llvm;
@@ -15,12 +18,16 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
+    AU.addRequired<PostDominatorTreeWrapperPass>();
   }
 
   virtual bool runOnFunction(Function &F) override {
-    // esempio di strutture dati utili per un passo
+    // strutture dati utili per il passo
     DominatorTree* DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    PostDominatorTree* PDT = &getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
     LoopInfo* LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+    ScalarEvolution* SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
     outs() << "LOOPFUSION INIZIATO...\n";
 
@@ -45,12 +52,19 @@ public:
         auto preheader = l->getLoopPreheader();
         auto exitBlock = i->getExitBlock();
 
-        if(exitBlock == preheader)
-        {
-          l->print(outs(), false);
-          outs() << " is adjacent to: ";
-          i->print(outs(), false);
-        }
+        if(exitBlock != preheader)
+          continue;
+
+        l->print(outs(), false);
+        outs() << " is adjacent to: ";
+        i->print(outs(), false);
+
+        if(!checkTripCount(*SE, i, l))
+          continue;
+
+        outs() << "\nThe two loops have been checked on trip count and loop bounds\n";
+
+        
       }
     }
     return true;
@@ -72,6 +86,17 @@ private:
       
       return op == l->getHeader();
     }
+    return true;
+  }
+
+  bool checkTripCount(ScalarEvolution& SE, Loop* i, Loop* l) {
+
+    if(SE.getSmallConstantTripCount(i) != SE.getSmallConstantTripCount(l))
+      return false;
+
+    if(!i->getCanonicalInductionVariable() || !l->getCanonicalInductionVariable())
+      return false;
+
     return true;
   }
 
