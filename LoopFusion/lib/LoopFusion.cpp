@@ -70,6 +70,9 @@ public:
           continue;
         
         outs() << "\nThe two loops are control flow equivalent\n";
+
+        loopFusion(LI, i, l);
+        outs() << "\nLoop fusion is successful\n\n";
       }
     }
     return true;
@@ -105,6 +108,26 @@ private:
     return true;
   }
 
+  void loopFusion(LoopInfo* LI, Loop* i, Loop* l) {
+
+    SmallVector<BasicBlock*> blocks;
+    for(auto& bb : l->getBlocks()) {      
+      if(bb == l->getHeader())
+        continue;
+      
+      if(bb == l->getLoopLatch())
+        continue;
+      
+      blocks.push_back(bb);
+    }
+    
+    // replace the IV of the second loop with the IV of the first one
+    Value* phiFirstLoop = &i->getHeader()->getInstList().front();
+    Instruction* phiSecondLoop = &l->getHeader()->getInstList().front();
+    phiSecondLoop->replaceAllUsesWith(phiFirstLoop);
+
+    // TODO: move body of second loop next to the body of the first one
+  }
 };
 
 char LoopFusionPass::ID = 0;
