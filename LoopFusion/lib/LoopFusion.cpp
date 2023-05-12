@@ -72,7 +72,6 @@ public:
         outs() << "\nThe two loops are control flow equivalent\n";
 
         loopFusion(LI, i, l);
-        outs() << "\nLoop fusion is successful\n\n";
       }
     }
     return true;
@@ -126,7 +125,34 @@ private:
     Instruction* phiSecondLoop = &l->getHeader()->getInstList().front();
     phiSecondLoop->replaceAllUsesWith(phiFirstLoop);
 
+    BasicBlock* bodyFirstLoop = nullptr;
+    for(auto& bb : i->getBlocks()) {
+      if(bb == i->getHeader())
+        continue;
+      bodyFirstLoop = bb;
+      break;
+    }
+
+    Instruction* branchFirstLoop = nullptr;
+    for(auto& inst : bodyFirstLoop->getInstList())
+        if(inst.getOpcode() == Instruction::Br) {
+          branchFirstLoop = &inst;
+          break;
+        }
+
     // TODO: move body of second loop next to the body of the first one
+    for(auto& bb : blocks) {
+      bb->replaceAllUsesWith(l->getLoopLatch());
+      bb->moveBefore(i->getLoopLatch());
+      /*
+      for(auto& inst : bb->getInstList()) {
+        if(inst.getOpcode() == Instruction::Br) {
+          inst.setSuccessor(1, branchFirstLoop->getSuccessor(1));
+        }
+      }
+      branchFirstLoop->setSuccessor(2, bb);
+      */
+    }
   }
 };
 

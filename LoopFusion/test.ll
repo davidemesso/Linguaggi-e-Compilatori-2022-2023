@@ -22,7 +22,7 @@ define dso_local void @populate(ptr noundef %0, ptr noundef %1, ptr noundef %2) 
   store i32 %10, ptr %12, align 4
   br label %23
 
-13:                                               ; preds = %26
+13:                                               ; No predecessors!
   %14 = sext i32 %.0 to i64
   %15 = getelementptr inbounds i32, ptr %0, i64 %14
   %16 = load i32, ptr %15, align 4
@@ -45,9 +45,9 @@ define dso_local void @populate(ptr noundef %0, ptr noundef %1, ptr noundef %2) 
 26:                                               ; preds = %28, %25
   %.1 = phi i32 [ 0, %25 ], [ %29, %28 ]
   %27 = icmp slt i32 %.0, 100
-  br i1 %27, label %13, label %30
+  br i1 %27, label %28, label %30
 
-28:                                               ; preds = %13
+28:                                               ; preds = %26, %13
   %29 = add nsw i32 %.0, 1
   br label %26, !llvm.loop !8
 
