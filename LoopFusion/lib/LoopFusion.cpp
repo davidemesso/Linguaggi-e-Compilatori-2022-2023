@@ -64,7 +64,12 @@ public:
 
         outs() << "\nThe two loops have been checked on trip count and loop bounds\n";
 
+        if(!DT->dominates(i->getExitBlock(), l->getLoopPreheader()))
+          continue;
+        if(!PDT->dominates(l->getLoopPreheader(), i->getExitBlock()))
+          continue;
         
+        outs() << "\nThe two loops are control flow equivalent\n";
       }
     }
     return true;
