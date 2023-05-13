@@ -45,9 +45,12 @@ define dso_local void @populate(ptr noundef %0, ptr noundef %1, ptr noundef %2) 
 26:                                               ; preds = %28, %25
   %.1 = phi i32 [ 0, %25 ], [ %29, %28 ]
   %27 = icmp slt i32 %.0, 100
-  br i1 %27, label %28, label %30
+  br i1 %27, label %.split, label %30
 
-28:                                               ; preds = %26, %13
+.split:                                           ; preds = %26
+  br label %28
+
+28:                                               ; preds = %.split, %13
   %29 = add nsw i32 %.0, 1
   br label %26, !llvm.loop !8
 

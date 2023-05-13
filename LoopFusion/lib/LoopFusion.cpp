@@ -4,6 +4,7 @@
 #include <llvm/Analysis/ScalarEvolution.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 using namespace llvm;
 
@@ -71,7 +72,7 @@ public:
         
         outs() << "\nThe two loops are control flow equivalent\n";
 
-        loopFusion(LI, i, l);
+        loopFusion(DT, LI, i, l);
       }
     }
     return true;
@@ -107,7 +108,7 @@ private:
     return true;
   }
 
-  void loopFusion(LoopInfo* LI, Loop* i, Loop* l) {
+  void loopFusion(DominatorTree* DT, LoopInfo* LI, Loop* i, Loop* l) {
 
     SmallVector<BasicBlock*> blocks;
     for(auto& bb : l->getBlocks()) {      
@@ -141,17 +142,27 @@ private:
         }
 
     // TODO: move body of second loop next to the body of the first one
+
+    auto splitExternalLoop = SplitEdge(i->getHeader(), i->getLoopLatch(), DT, LI);
+
     for(auto& bb : blocks) {
+      auto split = SplitEdge(l->getHeader(), bb, DT, LI);
       bb->replaceAllUsesWith(l->getLoopLatch());
-      bb->moveBefore(i->getLoopLatch());
-      /*
+      bb->removeFromParent();
+      // bb->insertInto(i->getHeader()->getParent(), i->getLoopLatch());
+
       for(auto& inst : bb->getInstList()) {
-        if(inst.getOpcode() == Instruction::Br) {
-          inst.setSuccessor(1, branchFirstLoop->getSuccessor(1));
+        if(!inst.isSafeToRemove())
+          continue;
+
+        inst.removeFromParent();
+
+        inst.moveAfter(&splitExternalLoop->getFirstInsertionPt());
+
+        if(inst.isTerminator()) {
+          outs() << inst << "\n";
         }
       }
-      branchFirstLoop->setSuccessor(2, bb);
-      */
     }
   }
 };
