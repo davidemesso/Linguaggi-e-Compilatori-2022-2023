@@ -1,6 +1,8 @@
-#define N 10
+#define N 9000
+#define BILLION 1000000000L
 #include <stdlib.h>
 #include <stdio.h>
+#include "time.h"
 
 void populate(int a[N], int b[N], int c[N]) {
     int i;
@@ -13,26 +15,22 @@ void populate(int a[N], int b[N], int c[N]) {
 int main () {
     int a[N], b[N], c[N];
 
-    printf("Valori iniziali di c[i]\n");
-    for(int i = 0; i < N; i++) {
+    for(int i = 0; i < N; i++)
         c[i] = 1;
-        printf("%d\n",c[i]);
-    }
 
-    populate(a,b,c);
+    struct timespec start;
 
-    printf("\nHo finito\n");
+    clock_gettime(CLOCK_REALTIME, &start);
 
-    printf("Vettore A\n");
     for(int i = 0; i < N; i++)
-        printf("%d\n", a[i]);
+        populate(a,b,c);
     
-    printf("\nVettore B\n");
-    for(int i = 0; i < N; i++)
-        printf("%d\n", b[i]);
+    struct timespec end;
 
-    printf("\nVettore C\n");
-    for(int i = 0; i < N; i++)
-        printf("%d\n", c[i]);
+    clock_gettime(CLOCK_REALTIME, &end);
+
+    long double delta = (long double)(end.tv_sec - start.tv_sec) + (long double)(end.tv_nsec - start.tv_nsec)/(long double)(BILLION);
+
+    printf("Time elapsed: %Lf\n\n", delta);
     return 0;
 }
