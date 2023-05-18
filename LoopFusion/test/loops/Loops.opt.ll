@@ -11,71 +11,75 @@ target triple = "x86_64-pc-linux-gnu"
 define dso_local void @populate(ptr noundef %0, ptr noundef %1, ptr noundef %2) #0 {
   br label %4
 
-4:                                                ; preds = %13, %3
-  %.0 = phi i32 [ 0, %3 ], [ %14, %13 ]
-  %5 = icmp slt i32 %.0, 9000
-  br i1 %5, label %6, label %15
+4:                                                ; preds = %15, %3
+  %.0 = phi i32 [ 0, %3 ], [ %16, %15 ]
+  %5 = icmp slt i32 %.0, 40000
+  br i1 %5, label %6, label %17
 
 6:                                                ; preds = %4
-  %7 = sext i32 %.0 to i64
-  %8 = getelementptr inbounds i32, ptr %2, i64 %7
-  %9 = load i32, ptr %8, align 4
-  %10 = mul nsw i32 5, %9
-  %11 = sext i32 %.0 to i64
-  %12 = getelementptr inbounds i32, ptr %0, i64 %11
-  store i32 %10, ptr %12, align 4
-  br label %13
+  %7 = sub nsw i32 40000, %.0
+  %8 = sub nsw i32 %7, 1
+  %9 = sext i32 %8 to i64
+  %10 = getelementptr inbounds i32, ptr %2, i64 %9
+  %11 = load i32, ptr %10, align 4
+  %12 = mul nsw i32 5, %11
+  %13 = sext i32 %.0 to i64
+  %14 = getelementptr inbounds i32, ptr %0, i64 %13
+  store i32 %12, ptr %14, align 4
+  br label %15
 
-13:                                               ; preds = %6
-  %14 = add nsw i32 %.0, 1
+15:                                               ; preds = %6
+  %16 = add nsw i32 %.0, 1
   br label %4, !llvm.loop !6
 
-15:                                               ; preds = %4
-  br label %16
+17:                                               ; preds = %4
+  br label %18
 
-16:                                               ; preds = %28, %15
-  %.1 = phi i32 [ 0, %15 ], [ %29, %28 ]
-  %17 = icmp slt i32 %.1, 9000
-  br i1 %17, label %18, label %30
+18:                                               ; preds = %32, %17
+  %.1 = phi i32 [ 0, %17 ], [ %33, %32 ]
+  %19 = icmp slt i32 %.1, 40000
+  br i1 %19, label %20, label %34
 
-18:                                               ; preds = %16
-  %19 = sext i32 %.1 to i64
-  %20 = getelementptr inbounds i32, ptr %0, i64 %19
-  %21 = load i32, ptr %20, align 4
-  %22 = sext i32 %.1 to i64
-  %23 = getelementptr inbounds i32, ptr %2, i64 %22
-  %24 = load i32, ptr %23, align 4
-  %25 = add nsw i32 %21, %24
-  %26 = sext i32 %.1 to i64
-  %27 = getelementptr inbounds i32, ptr %1, i64 %26
-  store i32 %25, ptr %27, align 4
-  br label %28
+20:                                               ; preds = %18
+  %21 = sext i32 %.1 to i64
+  %22 = getelementptr inbounds i32, ptr %0, i64 %21
+  %23 = load i32, ptr %22, align 4
+  %24 = sub nsw i32 40000, %.1
+  %25 = sub nsw i32 %24, 1
+  %26 = sext i32 %25 to i64
+  %27 = getelementptr inbounds i32, ptr %2, i64 %26
+  %28 = load i32, ptr %27, align 4
+  %29 = add nsw i32 %23, %28
+  %30 = sext i32 %.1 to i64
+  %31 = getelementptr inbounds i32, ptr %1, i64 %30
+  store i32 %29, ptr %31, align 4
+  br label %32
 
-28:                                               ; preds = %18
-  %29 = add nsw i32 %.1, 1
-  br label %16, !llvm.loop !8
+32:                                               ; preds = %20
+  %33 = add nsw i32 %.1, 1
+  br label %18, !llvm.loop !8
 
-30:                                               ; preds = %16
+34:                                               ; preds = %18
   ret void
 }
 
 ; Function Attrs: noinline nounwind sspstrong uwtable
 define dso_local i32 @main() #0 {
-  %1 = alloca [9000 x i32], align 16
-  %2 = alloca [9000 x i32], align 16
-  %3 = alloca [9000 x i32], align 16
+  %1 = alloca [40000 x i32], align 16
+  %2 = alloca [40000 x i32], align 16
+  %3 = alloca [40000 x i32], align 16
   %4 = alloca %struct.timespec, align 8
   %5 = alloca %struct.timespec, align 8
   br label %6
 
 6:                                                ; preds = %11, %0
   %.01 = phi i32 [ 0, %0 ], [ %12, %11 ]
-  %7 = icmp slt i32 %.01, 9000
+  %7 = icmp slt i32 %.01, 40000
   br i1 %7, label %8, label %13
 
 8:                                                ; preds = %6
   %9 = sext i32 %.01 to i64
-  %10 = getelementptr inbounds [9000 x i32], ptr %3, i64 0, i64 %9
+  %10 = getelementptr inbounds [40000 x i32], ptr %3, i64 0, i64 %9
   store i32 1, ptr %10, align 4
   br label %11
 
@@ -89,13 +93,13 @@ define dso_local i32 @main() #0 {
 
 15:                                               ; preds = %21, %13
   %.0 = phi i32 [ 0, %13 ], [ %22, %21 ]
-  %16 = icmp slt i32 %.0, 9000
+  %16 = icmp slt i32 %.0, 40000
   br i1 %16, label %17, label %23
 
 17:                                               ; preds = %15
-  %18 = getelementptr inbounds [9000 x i32], ptr %1, i64 0, i64 0
-  %19 = getelementptr inbounds [9000 x i32], ptr %2, i64 0, i64 0
-  %20 = getelementptr inbounds [9000 x i32], ptr %3, i64 0, i64 0
+  %18 = getelementptr inbounds [40000 x i32], ptr %1, i64 0, i64 0
+  %19 = getelementptr inbounds [40000 x i32], ptr %2, i64 0, i64 0
+  %20 = getelementptr inbounds [40000 x i32], ptr %3, i64 0, i64 0
   call void @populate(ptr noundef %18, ptr noundef %19, ptr noundef %20)
   br label %21
 

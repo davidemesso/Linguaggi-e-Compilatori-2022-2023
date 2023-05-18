@@ -1,4 +1,4 @@
-#define N 9000
+#define N 40000
 #define BILLION 1000000000L
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,11 +6,13 @@
 
 void populate(int a[N], int b[N], int c[N]) {
     int i;
-    for(i=0; i<N; i++)
-        a[i] = 5*c[i];
+    for(i=0; i<N; i++) {
+        a[i] = 5*c[N-i-1];
+    }
     
-    for(i=0; i<N; i++)
-        b[i] = a[i] + c[i];
+    for(i=0; i<N; i++) {
+        b[i] = a[i] + c[N-i-1];
+    }
 }
 int main () {
     int a[N], b[N], c[N];
